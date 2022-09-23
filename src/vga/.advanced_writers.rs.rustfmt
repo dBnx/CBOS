@@ -1,0 +1,71 @@
+use super::{ColorCode, RawBuffer, ScreenArea, ScreenChar, ScreenPos, VgaBuffer, VgaBufferExt};
+
+pub struct SubareaWriter<T: VgaBuffer> {
+    pos: ScreenPos,
+    area: ScreenArea,
+    column_position: u8,
+    color_code: ColorCode,
+    buffer: T,
+}
+
+impl<T:VgaBuffer> VgaBuffer for SubareaWriter<T> {
+    #[inline]
+    fn write_at(&mut self, pos: ScreenPos, c: ScreenChar) {
+        debug_assert!(pos.row < self.area.rows);
+        debug_assert!(pos.col < self.area.cols);
+        let pos = ScreenPos {
+         row : pos.row + self.pos.row,
+         col : pos.col + self.pos.col,
+        };
+        self.buffer.write_at(pos, c);
+    }
+
+    #[inline]
+    fn read_at(&self, pos: ScreenPos) -> ScreenChar {
+        debug_assert!(pos.row < self.area.rows);
+        debug_assert!(pos.col < self.area.cols);
+        let pos = ScreenPos {
+        row : pos.row + self.pos.row,
+        col : pos.col + self.pos.col,
+        };
+        self.buffer.read_at(pos)
+    }
+
+    #[inline]
+    fn size(&self) -> ScreenArea {
+        self.area
+    }
+
+    #[inline]
+    fn cursor(&self) -> ScreenPos{ self.buffer.cursor() }
+    #[inline]
+    fn set_cursor(&mut self, pos: ScreenPos) { self.buffer.set_cursor(pos) }
+}
+
+
+impl<T:VgaBuffer> SubareaWriter<T> {
+    pub fn new_from_VgaBuffer(buffer: T) {
+        let ScreenArea{ rows, cols } = self.buffer.get_size();
+        let area = ScreenArea{ rows / 2, cols };
+        let pos = ScreenPos::default();
+        Self {
+            pos,
+            area,
+        column_position: 0,
+        color_code: Default::default(),
+        buffer: impl<T:VgaBuffer> VgaBuffer,
+
+        }
+    }
+
+    pub fn new() -> Self {
+        Self::new_from_VgaBuffer(super::BasicWriter::new())
+    }
+}
+
+pub struct ScrollingWriter<T> {
+    area: ScreenArea,
+    column_position: u8,
+    color_code: ColorCode,
+    buffer: T,
+}
