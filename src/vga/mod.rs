@@ -1,14 +1,15 @@
-//! BUG: The first line to *print* variants do not appear.
-//! TODO: Last line of *print* variants are not used, when using Rolling*
-//!
 //! VGA Buffer: ~ 25 rows and 80 columns
 //! 16b each with: 8b ASCII code point, 8b formatting: 4b foreground, 3b background, 1b Blink
 //!
-//! Rewrite everything: Expose only VgaBufferSubviews, that handle everything
-//! subview.split_v() usw could be used.
+//! BUGS:
+//! - StatuLine does not work
+//! - The last line is never used - waste of screen space
+//! - ANSII Escape codes?
 //!
-//! Lowest line for Status (OS, Time, ... Programs?)
-//! Top: h splits for 2? programs
+//! FEATURES:
+//! - Exposes print*! and eprint*! to write to the main window
+//! - Exposes kprintln*! for the lower part for os messages.
+//! - Exposes `set_status_line()` to set the top bar (1 line)
 use core::fmt::{Arguments, Write};
 use x86_64::instructions::interrupts::without_interrupts;
 
@@ -36,16 +37,13 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 pub use traits::*;
 
-//lazy_static! {
-//    static ref WINDOW_STATUS: Mutex<Area> = {
-//        let cc = ColorCode::new(Color::Black, Color::White);
-//        Mutex::new(Area::new(0, ROWS_FOR_STATUS))
-//    };
-//}
-
+//
 // === Setup windows ===
+//
 lazy_static! {
-    static ref WINDOW_STATUS: Mutex<Area> = Mutex::new(Area::new(0, ROWS_FOR_STATUS));
+    /// TODO: +1 is a quickfix, because last line is neverused
+    /// -> make it 2 rows and hope nobody writes more than 2 lines.
+    static ref WINDOW_STATUS: Mutex<Area> = Mutex::new(Area::new(0, ROWS_FOR_STATUS + 1));
 }
 
 lazy_static! {
@@ -57,7 +55,9 @@ lazy_static! {
         Mutex::new(Area::new(ROWS_FOR_STATUS + ROWS_FOR_PROG, ROWS_FOR_SPECIAL));
 }
 
+//
 // === Setup views ===
+//
 lazy_static! {
     static ref STATUS: Mutex<View> = {
         let cc = ColorCode::new(Color::Green, Color::Black);
@@ -92,6 +92,9 @@ lazy_static! {
     };
 }
 
+//
+// === Macros ===
+//
 #[macro_export]
 macro_rules! set_status_line {
     ($($arg:tt)*) => ($crate::vga::_set_status_line(format_args!($($arg)*)));
@@ -99,7 +102,9 @@ macro_rules! set_status_line {
 
 pub fn _set_status_line(args: Arguments) {
     without_interrupts(|| {
-        STATUS.lock().write_fmt(args).unwrap();
+        let mut status = STATUS.lock();
+        status.put_byte(b'\r');
+        status.write_fmt(args).unwrap();
     });
 }
 

@@ -90,7 +90,7 @@ impl View {
         let mut col = col + 1;
         if col >= size.cols {
             col = 0;
-            row = row + 1;
+            row += 1;
         }
         if row >= size.rows {
             self.shift_up();

@@ -24,7 +24,7 @@ fn quick_test() {
     println!("This is a very long string, which never fits into a single line of the VGA buffer. I promise.");
     let mut i = 0;
     loop {
-        i = i + 1;
+        i += 1;
         //println!("{}", i);
         //eprintln!("{}", i);
         kprintln!("{}", i);
@@ -40,13 +40,8 @@ fn run() {
     crate::set_status_line!(
         "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
     );
-    println!("Test");
-    println!("Test 1");
-    println!("Test 2");
-    println!("Test 3");
-    println!("Test 4");
-    kprintln!("Hello from the kernel!");
-    //kill_kernel_stack();
+
+    cbos::shell::run();
 }
 
 #[no_mangle]

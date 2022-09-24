@@ -37,7 +37,8 @@ fn test_println_output() {
     });
 }
 
-#[test_case]
+#[ignore]
+//#[test_case]
 fn test_overflowing_println_output() {
     use x86_64::instructions::interrupts;
 

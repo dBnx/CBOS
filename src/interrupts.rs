@@ -22,7 +22,7 @@ pub fn init_pic() {
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
-    Timer = PIC_1_OFFSET + 0,
+    Timer = PIC_1_OFFSET,
     Keyboard = PIC_1_OFFSET + 1,
 }
 

@@ -9,6 +9,7 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+// Barebones os
 pub mod exceptions;
 pub mod gdt;
 pub mod hal;
@@ -21,13 +22,14 @@ pub mod vga;
 pub mod prelude;
 pub use prelude::*;
 
+// Memory management
+pub mod memory;
+
+// Usability
+pub mod shell;
+
 pub fn init() {
     // Avoid bug where first two commands don't output
-    println!("<>");
-    eprintln!("<>");
-    kprintln!("<>");
-    kprintln!("<>");
-
     println!("Booting cbos ...");
     gdt::init_gdt();
     exceptions::init_idt();
