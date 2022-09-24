@@ -1,48 +1,80 @@
 #![feature(custom_test_frameworks)]
-#![test_runner(crate::tests::test_runner)]
+#![test_runner(test_runner)]
+#![reexport_test_harness_main = "test_main"]
 #![no_std]
 #![no_main]
 #![allow(dead_code)]
 //#![deny(unsafe_code)]
+//use cbos::prelude::*;
+use cbos::*;
+#[cfg(not(test))]
+use core::panic::PanicInfo;
 
 #[cfg(test)]
-mod tests;
-mod vga;
-use core::panic::PanicInfo;
-pub use vga::macros::*;
-//mod prelude;
-//pub use prelude::*;
+use cbos::tests::*;
 
-fn run() {
-    println!("Test");
-    println!("Test 1: {}", "2");
-    println!("Test 2: {}", "2");
-    println!("Test 3: {}", "2");
-    println!("Test 4: {}", "2");
-    eprintln!("Test");
-    eprintln!("Test 1: {}", "2");
-    eprintln!("Test 2: {}", "2");
-    eprintln!("Test 3: {}", "2");
-    eprintln!("Test 4: {}", "2");
-    loop {
-        //core::hint::spin_loop();
+fn sleep_for_some_time(iterations: usize) {
+    for _ in 0..iterations {
+        volatile::Volatile::new(0).read(); // preventoptimizations
     }
+}
+
+fn quick_test() {
+    //println!("This is a string.");
+    println!("This is a very long string, which never fits into a single line of the VGA buffer. I promise.");
+    let mut i = 0;
+    loop {
+        i = i + 1;
+        //println!("{}", i);
+        //eprintln!("{}", i);
+        kprintln!("{}", i);
+        if i % 3 == 0 {
+            println!("{}", i);
+        }
+        sleep_for_some_time(800_000);
+        sleep_for_some_time(300_000);
+    }
+    //cbos::hal::hlt_loop();
+}
+fn run() {
+    crate::set_status_line!(
+        "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
+    );
+    println!("Test");
+    println!("Test 1");
+    println!("Test 2");
+    println!("Test 3");
+    println!("Test 4");
+    kprintln!("Hello from the kernel!");
+    //kill_kernel_stack();
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    cbos::init();
+
     #[cfg(test)]
-    tests::test_main();
+    test_main();
 
     run();
-    panic!("Damnit. Something wen't wrong");
+
+    cbos::hal::hlt_loop();
 }
 
-/// This function is called on panic.
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     eprintln!("{}", info);
-    loop {
-        //core::hint::spin_loop();
-    }
+    cbos::hal::hlt_loop();
+}
+
+#[test_case]
+fn trivial_assertion() {
+    assert_eq!(1, 1);
+}
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    test_panic_handler(info)
 }

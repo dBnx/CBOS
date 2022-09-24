@@ -113,8 +113,8 @@ pub struct ScreenArea {
 impl Default for ScreenArea {
     fn default() -> Self {
         Self {
-            rows: super::BUFFER_HEIGHT,
-            cols: super::BUFFER_WIDTH,
+            rows: super::BUFFER_ROWS,
+            cols: super::BUFFER_COLS,
         }
     }
 }
@@ -150,8 +150,7 @@ impl ScreenChar {
 
 #[repr(transparent)]
 pub struct RawBuffer {
-    pub chars:
-        [[Volatile<ScreenChar>; super::BUFFER_WIDTH as usize]; super::BUFFER_HEIGHT as usize],
+    pub chars: [[Volatile<ScreenChar>; super::BUFFER_COLS as usize]; super::BUFFER_ROWS as usize],
 }
 
 impl RawBuffer {
