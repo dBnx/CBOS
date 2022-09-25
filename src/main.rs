@@ -13,13 +13,32 @@ use cbos::tests::*;
 
 extern crate alloc;
 
+async fn async_number() -> u32 {
+    42
+}
+
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number: {}", number);
+}
+
 fn run() {
     crate::set_status_line!(
         "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
     );
     serial_println!("Test");
-    //cbos::interrupts::KEYBOARD.lock().process_keyevent(ev);
-    cbos::shell::run();
+    use task::{executor::Executor, Task};
+
+    let mut executor = Executor::new();
+    let mut kb = task::keyboard::ScancodeStream::new();
+
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(async move { programs::run_statusline().await }));
+    executor.spawn(Task::new(async move {
+        programs::run_shell(&mut kb).await;
+    }));
+    executor.run();
+    kprintln!("Reached end of run()");
     cbos::hal::hlt_loop();
 }
 
