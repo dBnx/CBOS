@@ -1,4 +1,4 @@
-//! From: https://os.phil-opp.com/paging-introduction/#paging-on-x86-64
+//! From: [](https://os.phil-opp.com/paging-introduction/#paging-on-x86-64)
 //! The `x86_64` architecture uses a 4-level page table and a page size of 4 KiB. Each page table,
 //! independent of the level, has a fixed size of 512 entries. Each entry has a size of 8 bytes,
 //! so each table is 512 * 8 B = 4 KiB large and thus fits exactly into one page.
@@ -6,7 +6,7 @@
 //! supports 48-bit addresses.
 //! They are sign-extended to be future-compatible (else CPU exceptions)
 //!
-//! How does 4-level page table work for x86_64 systems:
+//! How does 4-level page table work for `x86_64` systems:
 //! CR3 holds the _physical_ addr of L4 Page Table.
 //! Then the physical address of `address` is given by
 //! L3PT = L4PT[ address[47:40] ]
@@ -30,7 +30,9 @@ use x86_64::{
 };
 
 const FRAME_SIZE_NORMAL: usize = 4 * 1024;
+#[allow(dead_code)]
 const FRAME_SIZE_HUGE_2MB: usize = 512 * FRAME_SIZE_NORMAL;
+#[allow(dead_code)]
 const FRAME_SIZE_HUGE_1GB: usize = 512 * FRAME_SIZE_HUGE_2MB;
 
 pub mod allocator;
@@ -94,6 +96,7 @@ impl BootInfoFrameAllocator {
     ///
     /// # Safety
     /// The frames not in the memory map must be unused
+    #[must_use]
     pub unsafe fn init(memory_map: &'static MemoryMap) -> Self {
         BootInfoFrameAllocator {
             memory_map,
@@ -113,6 +116,7 @@ impl BootInfoFrameAllocator {
         frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
     }
 
+    #[must_use]
     pub fn available_frames(&self) -> usize {
         self.usable_frames().count() - self.next
     }

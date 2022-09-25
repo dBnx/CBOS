@@ -3,13 +3,13 @@
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 // Lints
-#![allow(dead_code)]
+#![warn(clippy::pedantic)]
 #![deny(clippy::perf)]
-#![deny(clippy::pedantic)]
 #![deny(clippy::style)]
 #![deny(clippy::complexity)]
 #![deny(clippy::suspicious)]
 #![deny(clippy::correctness)]
+#![allow(clippy::module_name_repetitions)]
 // Testing
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]

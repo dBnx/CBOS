@@ -12,6 +12,10 @@ pub const HEAP_SIZE: usize = 128 * 1024;
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+/// # Errors
+/// Returns an error, if the allocation of either a frame table or the actual physical memory
+/// errors out. This can happen if there is not enough physical memory to back the kernel heap
+/// or there are not enough usable frames.
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,

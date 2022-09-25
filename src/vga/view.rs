@@ -104,7 +104,7 @@ impl View {
         match ascii {
             b'\r' => {
                 cursor.col = 0;
-                self.set_cursor(cursor)
+                self.set_cursor(cursor);
             }
             b'\n' => self.new_line(),
             ascii => {

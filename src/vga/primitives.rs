@@ -54,9 +54,13 @@ pub enum Blink {
 pub struct ColorCode(u8);
 
 impl ColorCode {
+    #[must_use]
     pub fn new(foreground: Color, background: Color) -> Self {
         Self((background as u8) << 4 | (foreground as u8))
     }
+
+    #[inline]
+    #[must_use]
     pub fn get_bg(&self) -> Color {
         unsafe { core::mem::transmute::<u8, Color>(self.0 >> 4) }
     }
@@ -76,6 +80,7 @@ pub struct ScreenPos {
 }
 
 impl ScreenPos {
+    #[must_use]
     pub fn increment(&self, max_cols: u8) -> Self {
         let col = self.col + 1;
         if col < max_cols {
@@ -129,6 +134,7 @@ pub struct ScreenChar {
 }
 
 impl ScreenChar {
+    #[must_use]
     pub fn empty_with_background(bg: Color) -> Self {
         ScreenChar {
             ascii_character: b' ',
@@ -137,15 +143,17 @@ impl ScreenChar {
     }
 
     #[inline]
+    #[must_use]
     pub fn empty() -> Self {
         ScreenChar::empty_with_background(ColorCode::default().get_bg())
     }
 
     #[inline]
+    #[must_use]
     pub fn from_u8(character: u8) -> Self {
         ScreenChar {
             ascii_character: character,
-            color_code: Default::default(),
+            color_code: ColorCode::default(),
         }
     }
 }
@@ -162,16 +170,19 @@ impl RawBuffer {
     }
 
     #[inline]
+    #[must_use]
     pub fn read_at(&self, pos: ScreenPos) -> ScreenChar {
         self.chars[pos.row as usize][pos.col as usize].read()
     }
 
     #[inline]
+    #[must_use]
     pub fn get_size(&self) -> ScreenArea {
-        Default::default()
+        ScreenArea::default()
     }
 
     #[inline]
+    #[must_use]
     pub fn get_global_vga_buffer() -> &'static mut RawBuffer {
         unsafe { &mut *(0xb8000 as *mut RawBuffer) }
     }

@@ -100,6 +100,7 @@ macro_rules! set_status_line {
     ($($arg:tt)*) => ($crate::vga::_set_status_line(format_args!($($arg)*)));
 }
 
+#[doc(hidden)]
 pub fn _set_status_line(args: Arguments) {
     without_interrupts(|| {
         let mut status = STATUS.lock();
