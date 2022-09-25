@@ -1,6 +1,10 @@
+//! TODO:
+//! - Add `Spawner` struct to always be able to spawn new tasks.
+//! - Add threading and work stealing
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use core::task::{Context, Poll, Waker};
 use crossbeam_queue::ArrayQueue;
+use spin::RwLock;
 
 use super::{Task, TaskId};
 
@@ -8,7 +12,7 @@ const MAX_AMOUNT_OF_QUEUED_TASKS: usize = 128;
 
 pub struct Executor {
     /// Fast search and continuation of a task
-    tasks: BTreeMap<TaskId, Task>,
+    tasks: Arc<RwLock<BTreeMap<TaskId, Task>>>,
     /// Shared with wakers, which push their task onto it
     task_queue: Arc<ArrayQueue<TaskId>>,
     /// Allows reuse of wakers and ?
@@ -20,42 +24,36 @@ impl Executor {
     #[must_use]
     pub fn new() -> Self {
         Executor {
-            tasks: BTreeMap::new(),
+            tasks: Arc::new(RwLock::new(BTreeMap::new())),
             task_queue: Arc::new(ArrayQueue::new(MAX_AMOUNT_OF_QUEUED_TASKS)),
             waker_cache: BTreeMap::new(),
         }
     }
 
-    /// FIXME: Use custom, copy-able Spawner struct
-    ///
-    /// # Panics
-    /// Panics if the amount of queued tasks exceeds `MAX_AMOUNT_OF_QUEUED_TASKS`
-    pub fn spawn(&mut self, task: Task) {
-        let id = task.id;
-        assert!(
-            self.tasks.insert(id, task).is_none(),
-            "Task with {:?} already exists",
-            id
-        );
-        assert!(
-            self.task_queue.push(id).is_ok(),
-            "Max amount of queued tasks reached: {}",
-            MAX_AMOUNT_OF_QUEUED_TASKS
-        );
+    #[must_use]
+    pub fn get_spawner(&self) -> Spawner {
+        Spawner {
+            tasks: self.tasks.clone(),
+            task_queue: self.task_queue.clone(),
+        }
     }
 
     /// Runs until all queued tasks finish.
     pub fn run(&mut self) {
-        while !self.tasks.is_empty() {
+        while !self.tasks.read().is_empty() {
             self.run_ready_task();
             self.sleep_if_idle();
         }
     }
 
     fn sleep_if_idle(&self) {
+        use x86_64::instructions::interrupts::{self, enable_and_hlt};
+        interrupts::disable();
         // Check if a interrupt queues a new task inbetween
         if self.task_queue.is_empty() {
-            crate::hal::hlt();
+            enable_and_hlt();
+        } else {
+            interrupts::enable();
         }
     }
 
@@ -67,6 +65,7 @@ impl Executor {
         } = self;
 
         while let Some(id) = task_queue.pop() {
+            let mut tasks = tasks.write();
             let task = match tasks.get_mut(&id) {
                 Some(task) => task,
                 None => continue, // Task finished already
@@ -83,6 +82,31 @@ impl Executor {
                 Poll::Pending => {}
             }
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct Spawner {
+    tasks: Arc<RwLock<BTreeMap<TaskId, Task>>>,
+    task_queue: Arc<ArrayQueue<TaskId>>,
+}
+
+// Requires tasks
+impl Spawner {
+    /// # Panics
+    /// Panics if the amount of queued tasks exceeds `MAX_AMOUNT_OF_QUEUED_TASKS`
+    pub fn spawn(&mut self, task: Task) {
+        let id = task.id;
+        assert!(
+            self.tasks.write().insert(id, task).is_none(),
+            "Task with {:?} already exists",
+            id
+        );
+        assert!(
+            self.task_queue.push(id).is_ok(),
+            "Max amount of queued tasks reached: {}",
+            MAX_AMOUNT_OF_QUEUED_TASKS
+        );
     }
 }
 

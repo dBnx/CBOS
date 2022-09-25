@@ -29,12 +29,13 @@ fn run() {
     serial_println!("Test");
     use task::{executor::Executor, Task};
 
-    let mut executor = Executor::new();
     let mut kb = task::keyboard::ScancodeStream::new();
+    let mut executor = Executor::new();
+    let mut spawner = executor.get_spawner();
 
-    executor.spawn(Task::new(example_task()));
-    executor.spawn(Task::new(async move { programs::run_statusline().await }));
-    executor.spawn(Task::new(async move {
+    spawner.spawn(Task::new(example_task()));
+    spawner.spawn(Task::new(async move { programs::run_statusline().await }));
+    spawner.spawn(Task::new(async move {
         programs::run_shell(&mut kb).await;
     }));
     executor.run();
