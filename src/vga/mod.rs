@@ -2,7 +2,7 @@
 //! 16b each with: 8b ASCII code point, 8b formatting: 4b foreground, 3b background, 1b Blink
 //!
 //! BUGS:
-//! - StatuLine does not work
+//! - `StatusLine` does not work
 //! - The last line is never used - waste of screen space
 //! - ANSII Escape codes?
 //!
@@ -60,7 +60,7 @@ lazy_static! {
 //
 lazy_static! {
     static ref STATUS: Mutex<View> = {
-        let cc = ColorCode::new(Color::Green, Color::Black);
+        let cc = ColorCode::new(Color::Green, Color::DarkGray);
         let mut view = View::new(&WINDOW_STATUS, cc);
         view.clear();
         Mutex::new(view)
@@ -69,7 +69,7 @@ lazy_static! {
 
 lazy_static! {
     pub static ref STDOUT: Mutex<View> = {
-        let cc = ColorCode::default();
+        let cc = ColorCode::new(Color::White, Color::DarkGray);
         let mut view = View::new(&WINDOW_PROG, cc);
         view.clear();
         Mutex::new(view)
@@ -78,14 +78,14 @@ lazy_static! {
 
 lazy_static! {
     pub static ref STDERR: Mutex<View> = {
-        let cc = ColorCode::new(Color::LightRed, Color::Black);
+        let cc = ColorCode::new(Color::LightRed, Color::DarkGray);
         Mutex::new(View::new(&WINDOW_PROG, cc))
     };
 }
 
 lazy_static! {
     pub static ref KEROUT: Mutex<View> = {
-        let cc = ColorCode::new(Color::Black, Color::White);
+        let cc = ColorCode::new(Color::Yellow, Color::LightGray);
         let mut view = View::new(&WINDOW_SPECIAL, cc);
         view.clear();
         Mutex::new(view)

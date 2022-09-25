@@ -42,6 +42,7 @@ fn run() {
     crate::set_status_line!(
         "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
     );
+    serial_println!("Test");
     //cbos::interrupts::KEYBOARD.lock().process_keyevent(ev);
     cbos::shell::run();
     cbos::hal::hlt_loop();

@@ -1,4 +1,4 @@
-//! Minell. A MInimal shELL.
+//! Minell. A `MInimal shELL`.
 //! Supports basic operations, like:
 //! - None
 

@@ -88,6 +88,7 @@ impl ScreenPos {
         }
     }
 
+    #[must_use]
     pub fn newline(&self) -> Self {
         ScreenPos {
             row: self.row + 1,
@@ -95,6 +96,7 @@ impl ScreenPos {
         }
     }
 
+    #[must_use]
     pub fn cr(&self) -> Self {
         ScreenPos {
             row: self.row,

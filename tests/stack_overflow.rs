@@ -2,16 +2,18 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
+use bootloader::{entry_point, BootInfo};
 use cbos::tests::{exit_qemu, serial_print, serial_println, QemuExitCode};
 use core::panic::PanicInfo;
 use lazy_static::lazy_static;
 use x86_64::structures::idt::InterruptDescriptorTable;
 use x86_64::structures::idt::InterruptStackFrame;
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+entry_point!(main);
+
+fn main(boot_info: &'static BootInfo) -> ! {
     serial_print!("stack_overflow::stack_overflow...\t");
-    cbos::init();
+    cbos::init(boot_info);
     init_test_idt();
     kill_kernel_stack();
     panic!("Execution continued after stack overflow");
@@ -40,10 +42,8 @@ pub fn init_test_idt() {
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    serial_println!("[failure]");
-    exit_qemu(QemuExitCode::Failed);
-    loop {}
+fn panic(info: &PanicInfo) -> ! {
+    cbos::tests::test_panic_handler(info);
 }
 
 extern "x86-interrupt" fn handler_double_fault(

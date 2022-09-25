@@ -48,8 +48,8 @@ fn end_of_interrupt() {
 }
 
 extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
-    use crate::kprint;
-    kprint!(".");
+    use crate::serial_print;
+    serial_print!(".");
     end_of_interrupt();
 }
 
