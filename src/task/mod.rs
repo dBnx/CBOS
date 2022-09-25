@@ -15,11 +15,11 @@ pub mod keyboard;
 
 pub struct Task {
     id: TaskId,
-    future: Pin<Box<dyn Future<Output = ()>>>,
+    future: Pin<Box<dyn Future<Output = ()> + Send + Sync>>,
 }
 
 impl Task {
-    pub fn new(future: impl Future<Output = ()> + 'static) -> Task {
+    pub fn new(future: impl Future<Output = ()> + 'static + Send + Sync) -> Task {
         Task {
             id: TaskId::new(),
             future: Box::pin(future),

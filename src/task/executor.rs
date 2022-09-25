@@ -1,14 +1,18 @@
 //! TODO:
-//! - Add `Spawner` struct to always be able to spawn new tasks.
+//! - Either add lifetime to Spawner or make it otherwise aware that the
+//!   executor is no longer alive
 //! - Add threading and work stealing
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
+use conquer_once::spin::OnceCell;
 use core::task::{Context, Poll, Waker};
 use crossbeam_queue::ArrayQueue;
-use spin::RwLock;
+use spin::{Mutex, RwLock};
 
 use super::{Task, TaskId};
 
 const MAX_AMOUNT_OF_QUEUED_TASKS: usize = 128;
+
+pub static _GLOBAL_SPAWNER: OnceCell<Mutex<Spawner>> = OnceCell::uninit();
 
 pub struct Executor {
     /// Fast search and continuation of a task
@@ -17,6 +21,18 @@ pub struct Executor {
     task_queue: Arc<ArrayQueue<TaskId>>,
     /// Allows reuse of wakers and ?
     waker_cache: BTreeMap<TaskId, Waker>,
+}
+
+/// A global spawner must be installed beforehand with `Executor::set_global_spawner`
+///
+/// # Panics
+/// If the global spawner is not set.
+pub fn spawn(task: Task) {
+    _GLOBAL_SPAWNER
+        .try_get()
+        .expect("Global `Spawner` is set")
+        .lock()
+        .spawn(task);
 }
 
 impl Executor {
@@ -36,6 +52,12 @@ impl Executor {
             tasks: self.tasks.clone(),
             task_queue: self.task_queue.clone(),
         }
+    }
+
+    /// # Errors
+    /// If the global spawner is already set.
+    pub fn set_global_spawner(&mut self) -> Result<(), conquer_once::TryInitError> {
+        _GLOBAL_SPAWNER.try_init_once(|| Mutex::new(self.get_spawner()))
     }
 
     /// Runs until all queued tasks finish.

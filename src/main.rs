@@ -27,15 +27,18 @@ fn run() {
         "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
     );
     serial_println!("Test");
-    use task::{executor::Executor, Task};
+    use task::{
+        executor::{self, Executor},
+        Task,
+    };
 
     let mut kb = task::keyboard::ScancodeStream::new();
     let mut executor = Executor::new();
-    let mut spawner = executor.get_spawner();
+    executor.set_global_spawner().unwrap();
 
-    spawner.spawn(Task::new(example_task()));
-    spawner.spawn(Task::new(async move { programs::run_statusline().await }));
-    spawner.spawn(Task::new(async move {
+    executor::spawn(Task::new(example_task()));
+    executor::spawn(Task::new(async move { programs::run_statusline().await }));
+    executor::spawn(Task::new(async move {
         programs::run_shell(&mut kb).await;
     }));
     executor.run();
