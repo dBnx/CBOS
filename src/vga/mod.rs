@@ -60,7 +60,7 @@ lazy_static! {
 //
 lazy_static! {
     static ref STATUS: Mutex<View> = {
-        let cc = ColorCode::new(Color::Green, Color::DarkGray);
+        let cc = ColorCode::new(Color::LightBlue, Color::DarkGray);
         let mut view = View::new(&WINDOW_STATUS, cc);
         view.clear();
         Mutex::new(view)

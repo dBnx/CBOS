@@ -42,15 +42,15 @@ pub fn setup_interupt_handlers(idt: &mut InterruptDescriptorTable) {
 }
 
 #[inline]
-fn end_of_interrupt() {
+fn end_of_interrupt(what: InterruptIndex) {
     let mut pics = PICS.lock();
-    unsafe { pics.notify_end_of_interrupt(InterruptIndex::Timer.as_u8()) }
+    unsafe { pics.notify_end_of_interrupt(what.as_u8()) }
 }
 
 extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
     use crate::serial_print;
     serial_print!(".");
-    end_of_interrupt();
+    end_of_interrupt(InterruptIndex::Timer);
 }
 
 extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStackFrame) {
@@ -59,6 +59,7 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
     //let scancode: u8 = unsafe { port.read() };
     //use crate::util::ps2_scancodes as ps2;
 
+    //use x86_64::instructions::interrupts::without_interrupts;
     //if let Some(c) = ps2::parse_ibm_xt(scancode) {
     //    if c.state == ps2::KeyState::Pressed {
     //        print!("{:?}", c.key);
@@ -66,7 +67,7 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
     //}
 
     use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
-    use x86_64::instructions::interrupts::without_interrupts;
+    //use x86_64::instructions::interrupts::without_interrupts;
     use x86_64::instructions::port::Port;
     lazy_static! {
         pub static ref KB: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
@@ -76,6 +77,8 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
 
     let mut port = Port::new(0x60);
     let scancode: u8 = unsafe { port.read() };
+    crate::task::keyboard::add_scancode(scancode);
+    /* FIXME
     without_interrupts(move || {
         let mut keyboard = KB.lock();
         if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
@@ -88,6 +91,7 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
             }
         }
     });
+    */
 
-    end_of_interrupt();
+    end_of_interrupt(InterruptIndex::Keyboard);
 }

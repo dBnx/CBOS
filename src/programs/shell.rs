@@ -2,22 +2,24 @@
 //! Supports basic operations, like:
 //! - None
 
-use crate::keyboard;
 use crate::prelude::*;
+use crate::task;
+use crate::task::keyboard::ScancodeStream;
 
 /// Entrypoint.
-pub fn run() {
+pub async fn run(kb: &mut ScancodeStream) {
     eprintln!("\nMinell. A MInimal shELL.\nType help for help. Exit to exit ..");
     loop {
         eprint!("> ");
         // parse_input
-        let command: String = keyboard::get_new_line(80);
+        let command: String = task::keyboard::get_and_print_line(kb, 80).await;
         println!("");
-        parse_command(&command);
+        parse_command(&command).await;
     }
 }
 
-fn parse_command(command: &str) {
+async fn parse_command(command: &str) {
+    async {}.await;
     match command {
         "help" => print_help(),
         "shutdown" | "exit" => todo!("Not implemented yet"),

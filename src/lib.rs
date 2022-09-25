@@ -32,7 +32,6 @@ pub mod vga;
 #[macro_use]
 pub mod prelude;
 pub use prelude::*;
-pub mod keyboard;
 
 // Memory management
 pub mod allocator;
@@ -44,7 +43,7 @@ pub mod concurrency;
 pub mod task;
 
 // Usability
-pub mod shell;
+pub mod programs;
 
 pub fn init(boot_info: &'static BootInfo) {
     // Avoid bug where first two commands don't output

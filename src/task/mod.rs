@@ -7,7 +7,6 @@ use core::{
 };
 
 pub mod executor;
-mod simple_executor;
 
 // async-ified system ressources:
 pub mod keyboard;
