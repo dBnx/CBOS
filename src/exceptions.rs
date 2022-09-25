@@ -1,7 +1,7 @@
 //use crate::prelude::*;
-use crate::{eprintln, gdt, println};
+use crate::{eprintln, gdt, kprintln, println};
 use lazy_static::lazy_static;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 #[cfg(test)]
 mod tests;
@@ -16,6 +16,7 @@ lazy_static! {
                 .set_stack_index(gdt::IST_INDEX::DOUBLE_FAULT as u16);
         }
         idt.breakpoint.set_handler_fn(handler_breakpoint);
+        idt.page_fault.set_handler_fn(handler_page_fault);
         crate::interrupts::setup_interupt_handlers(&mut idt);
         idt
     };
@@ -38,4 +39,15 @@ extern "x86-interrupt" fn handler_double_fault(
 
 extern "x86-interrupt" fn handler_breakpoint(stack_frame: InterruptStackFrame) {
     eprintln!("EXCEPTION: BREAKPOINT\n{:?}", stack_frame);
+}
+
+extern "x86-interrupt" fn handler_page_fault(
+    _stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    use x86_64::registers::control::Cr2;
+    kprintln!("EXCEPTION: PAGE FAULT");
+    kprintln!("Accessed addr.: {:?}", Cr2::read());
+    kprintln!("Error code    : {:?}", error_code);
+    //kprintln!("{:?}", stack_frame);
 }

@@ -4,14 +4,16 @@
 #![no_std]
 #![no_main]
 #![allow(dead_code)]
+use bootloader::{entry_point, BootInfo};
 //#![deny(unsafe_code)]
-//use cbos::prelude::*;
 use cbos::*;
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 
 #[cfg(test)]
 use cbos::tests::*;
+
+extern crate alloc;
 
 fn sleep_for_some_time(iterations: usize) {
     for _ in 0..iterations {
@@ -40,17 +42,21 @@ fn run() {
     crate::set_status_line!(
         "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
     );
-
+    //cbos::interrupts::KEYBOARD.lock().process_keyevent(ev);
     cbos::shell::run();
+    cbos::hal::hlt_loop();
 }
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    cbos::init();
+// To ensure type safety of the entry point, the bootloader provides this macro.
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    cbos::init(boot_info);
 
     #[cfg(test)]
     test_main();
 
+    kprintln!("The kernel is alive!");
     run();
 
     cbos::hal::hlt_loop();

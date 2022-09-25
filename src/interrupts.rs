@@ -1,7 +1,7 @@
-use crate::{print, println};
+use crate::println;
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
-use spin;
+use spin::Mutex;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 /// Remap interrupt vectors from 0-7 to 32-39 for PIC 1, as it would overlap with CPU exceptions
@@ -9,8 +9,8 @@ pub const PIC_1_OFFSET: u8 = 32;
 /// Remap interrupt vectors from 8-15 to 40-47 for PIC 1, as it would overlap with CPU exceptions
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
-pub static PICS: spin::Mutex<ChainedPics> =
-    spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
+pub static PICS: Mutex<ChainedPics> =
+    Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
 /// Enables interrupts and maps 8259 interrupts to a usable range (32..47)
 pub fn init_pic() {
@@ -48,7 +48,8 @@ fn end_of_interrupt() {
 }
 
 extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
-    //print!(".");
+    use crate::kprint;
+    kprint!(".");
     end_of_interrupt();
 }
 
@@ -64,13 +65,11 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
     //    }
     //}
 
-    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
-    use spin::Mutex;
+    use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
     use x86_64::instructions::interrupts::without_interrupts;
     use x86_64::instructions::port::Port;
-
     lazy_static! {
-        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
+        pub static ref KB: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
             Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore)
         );
     }
@@ -78,13 +77,14 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
     let mut port = Port::new(0x60);
     let scancode: u8 = unsafe { port.read() };
     without_interrupts(move || {
-        let mut keyboard = KEYBOARD.lock();
+        let mut keyboard = KB.lock();
         if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
             if let Some(key) = keyboard.process_keyevent(key_event) {
-                match key {
-                    DecodedKey::Unicode(character) => print!("{}", character),
-                    DecodedKey::RawKey(key) => print!("{:?}", key),
-                }
+                crate::keyboard::KEYBOARD.lock().push_back(key);
+                //match key {
+                //    DecodedKey::Unicode(character) => print!("{}", character),
+                //    DecodedKey::RawKey(key) => print!("{:?}", key),
+                //}
             }
         }
     });
