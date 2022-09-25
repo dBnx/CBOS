@@ -1,4 +1,7 @@
-# Own OS
+# Own OS for x86-64
+
+![GitLab](https://img.shields.io/gitlab/license/dBnx/os)
+![GitLab](https://img.shields.io/badge/platform-x86--64-lightgrey)
 
 <p align="center">
   <img src="https://gitlab.com/dBnx/os/uploads/5f5169a35acc744b71cfa82d9ca657f4/os.png" alt="Output after boot using QEMU."/>
@@ -15,7 +18,32 @@ All the credits go to him. I just added a few things, a nicer interface and some
 
 ## Future goals
 
-- Custom slab and backup allocator
-- Multithreading
-- Userspace
-- ACPI
+- [ ] Custom slab and backup allocator
+- [ ] Multithreading
+- [ ] Userspace
+- [ ] ACPI
+- [ ] Filesystem support
+
+## Tests and running
+
+`QEMU` is required. Integration and unit tests can be run using the `cargo` infrastructure:
+
+```sh
+cargo test
+```
+
+The OS can then be experimented with, by running:
+
+```sh
+cargo run
+```
+
+It starts a local VM with minimal setup and shows something similar to the image at the top.
+
+## Building
+
+```sh
+cargo build
+```
+
+Creates a bootable image.
