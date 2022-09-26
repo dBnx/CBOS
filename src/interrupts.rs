@@ -3,7 +3,7 @@ use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
-use crate::{kprintln, println};
+use crate::println;
 
 /// Remap interrupt vectors from 0-7 to 32-39 for PIC 1, as it would overlap with CPU exceptions
 pub const PIC_1_OFFSET: u8 = 32;
@@ -50,7 +50,6 @@ fn end_of_interrupt(what: InterruptIndex) {
 
 extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
     use crate::task::timer;
-    use core::sync::atomic::Ordering;
     timer::tick();
     end_of_interrupt(InterruptIndex::Timer);
 }

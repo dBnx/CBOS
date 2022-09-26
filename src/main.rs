@@ -13,18 +13,9 @@ use cbos::tests::*;
 
 extern crate alloc;
 
-async fn async_number() -> u32 {
-    42
-}
-
-async fn example_task() {
-    let number = async_number().await;
-    println!("async number: {}", number);
-}
-
 fn run() {
     crate::set_status_line!(
-        "################################################################################"
+        "################################################################################\r"
     );
     serial_println!("Test");
     use task::{
@@ -36,7 +27,6 @@ fn run() {
     let mut executor = Executor::new();
     executor.set_global_spawner().unwrap();
 
-    executor::spawn(Task::new(example_task()));
     executor::spawn(Task::new(async move { programs::run_statusline().await }));
     executor::spawn(Task::new(async move {
         programs::run_shell(&mut kb).await;

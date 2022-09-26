@@ -18,7 +18,7 @@ static ROWS_FOR_PROG: u8 = 20;
 static ROWS_FOR_SPECIAL: u8 = BUFFER_ROWS - ROWS_FOR_PROG - ROWS_FOR_STATUS;
 
 const BUFFER_ROWS: u8 = 25;
-const BUFFER_COLS: u8 = 80;
+pub const BUFFER_COLS: u8 = 80;
 
 mod area;
 mod view;

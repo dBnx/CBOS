@@ -30,7 +30,7 @@ impl TickStream {
     #[must_use]
     pub fn new(ticks: u64) -> Self {
         TIMER_WAKER
-            .try_init_once(|| AtomicWaker::new())
+            .try_init_once(AtomicWaker::new)
             .expect("Currently only one TickStream (Timer) can exist");
         Self {
             ticks,
@@ -47,6 +47,7 @@ impl TickStream {
     /// Make sure the waker is installed if returning `Poll::Pending`
     #[inline]
     fn ret_pending(&self, waker: &Waker) -> Poll<Option<()>> {
+        let _ = self;
         TIMER_WAKER.try_get().unwrap().register(waker);
         Poll::Pending
     }

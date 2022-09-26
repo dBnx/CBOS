@@ -14,9 +14,7 @@ lazy_static! {
 /// Periodically updates the status line
 pub async fn run() {
     let mut ticks = TickStream::new(16);
-    kprint!("Timer: ");
     while let Some(()) = ticks.next().await {
-        kprint!(".");
         let mut status_line = STATUS_LINE.lock();
         status_line.tick();
         crate::hal::hlt();
@@ -74,9 +72,15 @@ impl<const T: usize> StatusLine<T> {
 impl<const T: usize> fmt::Display for StatusLine<T> {
     /// Always returns a string with length 80, which corresponds to the VGA buffer length
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Used to ensure a constant width
+        let mut len = self.name.len() + 8 /* Clock */;
         write!(f, "{}", self.name)?;
         for state in &self.vts {
             write!(f, "{}", state)?;
+            len += 5;
+        }
+        for _ in len..(crate::vga::BUFFER_COLS as usize) {
+            write!(f, " ")?;
         }
         write!(f, "{}", self.clock)
     }
@@ -130,10 +134,12 @@ impl fmt::Display for VtsState {
     /// Always returns a string with length 3
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
-            VtsState::Active => "[]",
-            _ => "   ",
+            VtsState::Active => " [X] ",
+            VtsState::Inactive => " [-] ",
+            VtsState::Alert => " [!] ",
+            VtsState::NotUsed => " [ ] ",
         };
-        // FIXME
-        write!(f, "{:?}", self)
+        debug_assert_eq!(s.len(), 5);
+        write!(f, "{}", s)
     }
 }

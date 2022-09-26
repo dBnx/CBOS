@@ -4,7 +4,7 @@
 ![GitLab](https://img.shields.io/badge/platform-x86--64-lightgrey)
 
 <p align="center">
-  <img src="https://gitlab.com/dBnx/os/uploads/5f5169a35acc744b71cfa82d9ca657f4/os.png" alt="Output after boot using QEMU."/>
+  <img src="https://gitlab.com/dBnx/os/uploads/81e45fd26fecedb63e80b4c63a52debc/os.png" alt="Output after boot using QEMU."/>
 </p>
 This project is a result from the awesome articles of [Philipp Oppermann](https://github.com/sponsors/phil-opp), and can be found at https://os.phil-opp.com/.
 All the credits go to him. I just added a few things, a nicer interface and some other stuff.
@@ -13,8 +13,10 @@ All the credits go to him. I just added a few things, a nicer interface and some
 
 - Linked List allocator
 - Single thread
-- (Cooperative) Multitasking support through a async executor supporting async Rust
 - Kernel access to physical ram through a direct mapping in virtual space
+- (Cooperative) Multitasking support through a async executor supporting async Rust
+- A minimal shell to interact with it
+- A glorious status bar, that shows the name of the OS and roughly the time since boot
 
 ## Future goals
 
