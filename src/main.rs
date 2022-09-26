@@ -24,7 +24,7 @@ async fn example_task() {
 
 fn run() {
     crate::set_status_line!(
-        "<CBOS> [1][2][3]<4>[5][6]                                                  12:13"
+        "################################################################################"
     );
     serial_println!("Test");
     use task::{

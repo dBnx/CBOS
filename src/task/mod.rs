@@ -10,6 +10,7 @@ pub mod executor;
 
 // async-ified system ressources:
 pub mod keyboard;
+pub mod timer;
 
 // Primitives
 

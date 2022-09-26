@@ -1,8 +1,9 @@
-use crate::println;
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+
+use crate::{kprintln, println};
 
 /// Remap interrupt vectors from 0-7 to 32-39 for PIC 1, as it would overlap with CPU exceptions
 pub const PIC_1_OFFSET: u8 = 32;
@@ -48,26 +49,14 @@ fn end_of_interrupt(what: InterruptIndex) {
 }
 
 extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
-    use crate::serial_print;
-    serial_print!(".");
+    use crate::task::timer;
+    use core::sync::atomic::Ordering;
+    timer::tick();
     end_of_interrupt(InterruptIndex::Timer);
 }
 
 extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStackFrame) {
-    //use x86_64::instructions::port::Port;
-    //let mut port = Port::new(0x60);
-    //let scancode: u8 = unsafe { port.read() };
-    //use crate::util::ps2_scancodes as ps2;
-
-    //use x86_64::instructions::interrupts::without_interrupts;
-    //if let Some(c) = ps2::parse_ibm_xt(scancode) {
-    //    if c.state == ps2::KeyState::Pressed {
-    //        print!("{:?}", c.key);
-    //    }
-    //}
-
     use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
-    //use x86_64::instructions::interrupts::without_interrupts;
     use x86_64::instructions::port::Port;
     lazy_static! {
         pub static ref KB: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
@@ -78,20 +67,6 @@ extern "x86-interrupt" fn handler_keyboard_interrupt(_stack_frame: InterruptStac
     let mut port = Port::new(0x60);
     let scancode: u8 = unsafe { port.read() };
     crate::task::keyboard::add_scancode(scancode);
-    /* FIXME
-    without_interrupts(move || {
-        let mut keyboard = KB.lock();
-        if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-            if let Some(key) = keyboard.process_keyevent(key_event) {
-                crate::keyboard::KEYBOARD.lock().push_back(key);
-                //match key {
-                //    DecodedKey::Unicode(character) => print!("{}", character),
-                //    DecodedKey::RawKey(key) => print!("{:?}", key),
-                //}
-            }
-        }
-    });
-    */
 
     end_of_interrupt(InterruptIndex::Keyboard);
 }

@@ -1,45 +1,59 @@
 #![allow(dead_code, unused_variables, non_snake_case)]
 use core::fmt;
 
-/// Periodically updates the status line
-pub async fn run() {
-    async {}.await;
+use futures_util::StreamExt;
+use lazy_static::lazy_static;
+use spin::Mutex;
+
+use crate::task::timer::TickStream;
+
+lazy_static! {
+    static ref STATUS_LINE: Mutex<StatusLine<12>> = Mutex::new(StatusLine::new("<CBAS>"));
 }
 
-/// T corresponds to the amount of ticks that equal to one second.
-pub struct StatusLine<const T: usize> {
+/// Periodically updates the status line
+pub async fn run() {
+    let mut ticks = TickStream::new(16);
+    kprint!("Timer: ");
+    while let Some(()) = ticks.next().await {
+        kprint!(".");
+        let mut status_line = STATUS_LINE.lock();
+        status_line.tick();
+        crate::hal::hlt();
+    }
+}
+
+/// T corresponds to the amount of vts'es
+struct StatusLine<const T: usize> {
     name: &'static str,
-    vts: [VtsState; 12],
+    vts: [VtsState; T],
     clock: Clock,
     ticks: usize,
 }
 
 impl<const T: usize> StatusLine<T> {
-    pub fn new(name: &'static str) -> Self {
+    fn new(name: &'static str) -> Self {
         Self {
             name,
-            vts: Default::default(),
+            vts: [VtsState::default(); T],
             clock: Clock::default(),
             ticks: 0,
         }
     }
 
-    fn update_status_line(&self) {
+    fn update(&self) {
         set_status_line!("{}", self);
     }
 
     #[inline]
-    pub fn set_name(&mut self, name: &'static str) {
+    fn set_name(&mut self, name: &'static str) {
         //debug_assert_eq!(name.len(), 5);
         self.name = name;
     }
 
-    pub fn tick(&mut self) {
-        self.ticks += 1;
-        if self.ticks >= T {
-            self.ticks = 0;
-            self.update_status_line();
-        }
+    fn tick(&mut self) {
+        self.clock.tick();
+        self.update();
     }
 
     /// Returns `None` if it could not be updated due to the length of name.
@@ -48,8 +62,12 @@ impl<const T: usize> StatusLine<T> {
             return None;
         }
         self.vts[id] = state;
-        self.update_status_line();
+        self.update();
         Some(())
+    }
+
+    pub fn get_clock(&self) -> Clock {
+        self.clock
     }
 }
 
@@ -65,10 +83,27 @@ impl<const T: usize> fmt::Display for StatusLine<T> {
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
-struct Clock {
-    hours: u8,
-    minutes: u8,
-    seconds: u8,
+pub struct Clock {
+    pub hours: u8,
+    pub minutes: u8,
+    pub seconds: u8,
+}
+
+impl Clock {
+    fn tick(&mut self) {
+        self.seconds += 1;
+        if self.seconds >= 60 {
+            self.seconds = 0;
+            self.minutes += 1;
+        }
+        if self.minutes >= 60 {
+            self.minutes = 0;
+            self.hours += 1;
+        }
+        if self.hours > 99 {
+            self.hours = 0;
+        }
+    }
 }
 
 /// Procudes the string "HH:mm:ss", with a length of 8
@@ -76,7 +111,7 @@ impl fmt::Display for Clock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:>2}:{:>2}:{:>2}",
+            "{:>2}:{:0>2}:{:0>2}",
             self.hours, self.minutes, self.seconds
         )
     }

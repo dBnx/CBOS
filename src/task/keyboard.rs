@@ -54,6 +54,8 @@ impl ScancodeStream {
         }
     }
 
+    /// Make sure the waker is installed if returning `Poll::Pending`
+    #[inline]
     fn ret_pending(waker: &Waker) -> Poll<Option<DecodedKey>> {
         WAKER.register(waker);
         Poll::Pending
